@@ -123,8 +123,11 @@ US$ 1,332.44 (total US$ 39,978.56).
 
 ## PDF
 
-- **Descargar plano (PDF)**, encima del plano: plano horizontal y tabla de lotes
-  disponibles con su precio y su cuota de referencia.
+- **Imagen para imprimir (PDF)**, encima del plano: solo el plano con el fondo,
+  el nombre del condominio y el logo, a toda la hoja (A4 horizontal, sin márgenes
+  ni tablas). Es el que se imprime o se manda como imagen.
+- **Plano con precios (PDF)**: plano horizontal y tabla de lotes disponibles con
+  su precio y su cuota de referencia.
 - **Descargar cotización (PDF)**, en la ficha de un lote: datos del lote, su
   ubicación marcada en el plano, el plan de pago que se simuló y las demás opciones
   de plazo con la misma inicial.
@@ -140,8 +143,13 @@ una imagen de fondo (el paisaje detrás del plano y de la página). Todo se camb
 el editor → **Marca**, y ahí mismo se crean marcas nuevas.
 
 Los fondos incluidos son `assets/img/fondo-waka.svg` (viñedo verde) y
-`assets/img/fondo-ecoraiz.svg` (tonos tierra). Para usar una foto o el logo real,
-súbelos a `assets/img/` y escribe la ruta en la marca.
+`assets/img/fondo-ecoraiz.svg` (tonos tierra), y los logos `assets/img/logo-waka.svg`
+y `assets/img/logo-ecoraiz.svg`. Esos logos son una versión dibujada para el sitio:
+para usar el archivo oficial, súbelo a `assets/img/` y escribe su ruta en la marca.
+
+Sobre el plano aparecen, como en los planos impresos, el nombre del condominio con
+uvas (arriba a la izquierda) y el logo de la marca (abajo a la derecha). Se apagan
+por condominio en el editor → Marca.
 
 ## Estados de los lotes
 

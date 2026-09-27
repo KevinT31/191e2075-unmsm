@@ -123,6 +123,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 /* ---------- Plano (compartido) ---------- */
 .plano-marco {
   position: relative;
+  container-type: inline-size;
   background: var(--campo) var(--fondo-img) center bottom / cover no-repeat;
   border-radius: var(--radio);
   overflow: hidden;
@@ -400,3 +401,20 @@ dialog.modal::backdrop { background: rgb(10 20 12 / 45%); }
 .hoja .destacado td { background: #eef3e8; font-weight: 700; }
 .hoja .pie-hoja { margin-top: 14px; font-size: 10.5px; color: #5b6a60; border-top: 1px solid #d5ddd0; padding-top: 8px; }
 .hoja-cotizacion .plano-marco svg { max-height: 330px; }
+
+/* Sellos sobre el plano: nombre del condominio y logo de la marca */
+.sello { position: absolute; pointer-events: none; z-index: 2; }
+.sello-cond { top: 2.5%; left: 2%; display: flex; align-items: center; gap: .5em; font-size: 2.1cqw; color: #6e2317; }
+.sello-cond svg { width: 2.6em; height: auto; flex: none; }
+.sello-cond b { display: block; font: 400 2.3em/1 "Great Vibes", "Brush Script MT", cursive; text-shadow: 0 1px 0 #fff, 0 0 6px rgb(255 255 255 / 80%); }
+.sello-cond small { display: block; margin-top: .25em; font: 700 .62em/1 var(--fuente-titulo); letter-spacing: .28em; text-transform: uppercase; color: #3e3a2a; text-shadow: 0 0 4px rgb(255 255 255 / 90%); }
+.sello-marca { right: 1.6%; bottom: 7%; width: 20%; height: auto; filter: drop-shadow(0 2px 6px rgb(255 255 255 / 70%)); }
+
+/* PDF "solo imagen": plano, fondo y logo, a toda la hoja */
+@page poster { size: A4 landscape; margin: 0; }
+.hoja-poster {
+  page: poster; width: 297mm; height: 209mm; overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+  background: #eef2e2 var(--fondo-img) center bottom / cover no-repeat;
+}
+.hoja-poster .plano-marco { width: 96%; background: none; border: 0; border-radius: 0; }

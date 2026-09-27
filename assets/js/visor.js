@@ -70,7 +70,9 @@
     var logo = $('marcaLogo');
     if (marca && marca.logo) { logo.src = marca.logo; logo.alt = nombre; logo.hidden = false; }
     else logo.hidden = true;
+    // el logo ya trae nombre y lema
     $('sitioNombre').hidden = !!(marca && marca.logo);
+    $('marcaLema').hidden = !!(marca && marca.logo);
     document.title = estado.cond.nombre + ' · ' + nombre;
   }
 
@@ -104,6 +106,7 @@
     pintarResumen();
     pintarLeyenda($('leyenda'), c);
     Plano.dibujar(svg, c, {});
+    Plano.sellos(marco, sitio, c);
     var base = encuadre(c);
     svg.style.aspectRatio = base.w + ' / ' + base.h;
     if (vista) vista.reiniciar(base); else vista = new Plano.Vista(svg, base);
@@ -184,7 +187,7 @@
       m.style.background = Plano.estadoDe(l).color;
       var info = texto('span');
       info.appendChild(texto('strong', 'Lote ' + l.numero));
-      info.appendChild(texto('small', [Plano.formatoArea(l.area), l.perimetro ? l.perimetro + ' ml' : ''].filter(Boolean).join(' · ')));
+      info.appendChild(texto('small', Plano.formatoArea(l.area)));
       var precio = texto('span', null, 'fila-precio');
       var pc = Plano.precioContado(l);
       precio.textContent = isFinite(pc) ? dinero(pc) : 'Consultar';
@@ -406,7 +409,7 @@
     return cab;
   }
 
-  function planoImpreso(seleccionado) {
+  function planoImpreso(seleccionado, conSellos) {
     var c = estado.cond;
     var m = texto('div', null, 'plano-marco');
     var s = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
@@ -415,6 +418,7 @@
     s.setAttribute('viewBox', [b.x, b.y, b.w, b.h].join(' '));
     s.style.aspectRatio = b.w + ' / ' + b.h;
     m.appendChild(s);
+    if (conSellos) Plano.sellos(m, sitio, c);
     return m;
   }
 
@@ -453,7 +457,7 @@
     h.appendChild(cabeceraHoja([c.nombre, fecha(hoy())]));
     h.appendChild(texto('h1', c.nombre));
     h.appendChild(texto('p', [c.ubicacion, c.descripcion].filter(Boolean).join(' · '), 'h-sub'));
-    h.appendChild(planoImpreso(null));
+    h.appendChild(planoImpreso(null, true));
     var ley = texto('div', null, 'leyenda');
     pintarLeyenda(ley, c);
     h.appendChild(ley);
@@ -531,7 +535,15 @@
     imprimir(h, 'Cotizacion Lote ' + l.numero + ' ' + c.nombre);
   }
 
+  /* Solo la imagen: plano, fondo y logo a toda la hoja, sin tablas. Para imprimir. */
+  function imprimirImagen() {
+    var h = texto('div', null, 'hoja-poster');
+    h.appendChild(planoImpreso(null, true));
+    imprimir(h, estado.cond.nombre + ' - plano para imprimir');
+  }
+
   $('btnPlanoPdf').addEventListener('click', imprimirPlano);
+  $('btnImagenPdf').addEventListener('click', imprimirImagen);
 
   /* ---------- Filtro ---------- */
   function filtrar(f) {
@@ -616,6 +628,7 @@
       var l = estado.sel && estado.cond.formas.find(function (f) { return f.id === estado.sel; });
       if (l) imprimirCotizacion(l);
     },
-    imprimirPlano: imprimirPlano
+    imprimirPlano: imprimirPlano,
+    imprimirImagen: imprimirImagen
   };
 })();

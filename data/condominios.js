@@ -3,13 +3,14 @@
  * Este archivo lo genera el editor (editor.html → "Publicar cambios").
  * Puedes editarlo a mano: cada forma del plano ocupa una línea.
  */
-window.SITIO = {"nombre": "Mapa de Lotes", "marcas": {"waka": {"nombre": "WAKA", "lema": "Eco-Condominio", "color": "#8c1d1d", "fondo": "assets/img/fondo-waka.svg", "logo": ""}, "ecoraiz": {"nombre": "Ecoraiz", "lema": "Condominios ecológicos", "color": "#7a4a26", "fondo": "assets/img/fondo-ecoraiz.svg", "logo": ""}}};
+window.SITIO = {"nombre": "Mapa de Lotes", "marcas": {"waka": {"nombre": "WAKA", "lema": "Eco-Condominio", "color": "#8c1d1d", "fondo": "assets/img/fondo-waka.svg", "logo": "assets/img/logo-waka.svg"}, "ecoraiz": {"nombre": "Ecoraiz", "lema": "Condominios ecológicos", "color": "#7a4a26", "fondo": "assets/img/fondo-ecoraiz.svg", "logo": "assets/img/logo-ecoraiz.svg"}}};
 
 window.CONDOMINIOS = [
   {
     "id": "la-finca",
     "nombre": "La Finca",
     "marca": "waka",
+    "mostrarSellos": true,
     "ubicacion": "El Carmen, Chincha",
     "descripcion": "Eco-condominio Waka. Lotes campestres de 730 a 1,000 m² junto a la carretera Chincha – El Carmen.",
     "moneda": "US$",
@@ -18,14 +19,14 @@ window.CONDOMINIOS = [
     "referencia": "assets/img/la-finca-referencia.webp",
     "financiamiento": {"base": "contado", "metodo": "frances", "tasaAnual": 10, "inicialSugerida": 8000, "inicialMinima": 5000, "plazos": [{"meses": 12}, {"meses": 18}, {"meses": 20}, {"meses": 24}], "plazoMaximo": 36, "precioM2": "", "validezDias": 15, "mostrarTasa": true},
     "formas": [
-      {"id": "terreno", "tipo": "terreno", "nombre": "Terreno", "puntos": [[599, 27], [1748, 9], [1152, 857], [8, 862]]},
+      {"id": "terreno", "tipo": "terreno", "nombre": "Terreno", "puntos": [[599, 27], [1748, 9], [1146, 866], [4, 868]]},
       {"id": "area-club", "tipo": "area", "nombre": "Club house y piscina", "puntos": [[414, 752], [576, 752], [589, 858], [366, 858]]},
       {"id": "area-deportiva", "tipo": "area", "nombre": "Zona deportiva", "puntos": [[630, 752], [764, 752], [764, 858], [625, 858]]},
-      {"id": "carretera", "tipo": "via", "nombre": "Carretera Chincha – El Carmen", "color": "#8d9189", "puntos": [[0, 868], [1755, 868], [1755, 906], [0, 906]]},
+      {"id": "carretera", "tipo": "via", "nombre": "Carretera Chincha – El Carmen", "color": "#8d9189", "puntos": [[0, 864], [1755, 864], [1755, 906], [0, 906]]},
       {"id": "via-izquierda", "tipo": "via", "nombre": "Vía izquierda", "puntos": [[868, 96], [908, 96], [376, 797], [336, 797]]},
       {"id": "via-derecha", "tipo": "via", "nombre": "Vía derecha", "puntos": [[1385, 80], [1423, 80], [883, 794], [841, 745], [882, 745]]},
       {"id": "area-de-paso", "tipo": "via", "nombre": "Área de paso", "puntos": [[400, 716], [934, 716], [911, 749], [375, 749]]},
-      {"id": "ingreso", "tipo": "via", "nombre": "Ingreso", "puntos": [[580, 747], [626, 747], [622, 868], [594, 868]]},
+      {"id": "ingreso", "tipo": "via", "nombre": "Ingreso", "puntos": [[580, 747], [626, 747], [622, 866], [594, 866]]},
       {"id": "rotonda-izquierda", "tipo": "rotonda", "nombre": "Rotonda", "cx": 884, "cy": 100, "rx": 36, "ry": 26},
       {"id": "rotonda-derecha", "tipo": "rotonda", "nombre": "Rotonda", "cx": 1404, "cy": 82, "rx": 35, "ry": 24},
       {"id": "lote-01", "tipo": "lote", "numero": "01", "estado": "no_disponible", "area": "933.21", "perimetro": "148.92", "puntos": [[59, 799], [16, 858], [352, 858], [389, 796]]},

@@ -25,8 +25,8 @@
   };
 
   const MARCAS_POR_DEFECTO = {
-    waka: { nombre: 'WAKA', lema: 'Eco-Condominio', color: '#8c1d1d', fondo: 'assets/img/fondo-waka.svg', logo: '' },
-    ecoraiz: { nombre: 'Ecoraiz', lema: 'Condominios ecológicos', color: '#7a4a26', fondo: 'assets/img/fondo-ecoraiz.svg', logo: '' }
+    waka: { nombre: 'WAKA', lema: 'Eco-Condominio', color: '#8c1d1d', fondo: 'assets/img/fondo-waka.svg', logo: 'assets/img/logo-waka.svg' },
+    ecoraiz: { nombre: 'Ecoraiz', lema: 'Condominios ecológicos', color: '#7a4a26', fondo: 'assets/img/fondo-ecoraiz.svg', logo: 'assets/img/logo-ecoraiz.svg' }
   };
   function normalizar(d) {
     if (!d.sitio) d.sitio = { nombre: 'Mapa de Lotes' };
@@ -936,6 +936,13 @@
       campo(r, 'Color', 'm-color', m.color, (v) => { m.color = v; }, { tipo: 'color' });
       campo(r, 'Logo (opcional)', 'm-logo', m.logo, (v) => { m.logo = v.trim(); }, { placeholder: 'assets/img/logo.png' });
       campo(r, 'Imagen de fondo', 'm-fondo', m.fondo, (v) => { m.fondo = v.trim(); }, { ancho: true, placeholder: 'assets/img/fondo-waka.svg' });
+      const ls = el('label', 'campo ancho');
+      const cs = el('input');
+      cs.type = 'checkbox'; cs.id = 'c-sellos'; cs.checked = c.mostrarSellos !== false; cs.style.width = 'auto';
+      conHistorial(cs, 'change', () => { c.mostrarSellos = cs.checked; });
+      ls.append(cs, ' Mostrar el nombre y el logo sobre el plano (web y PDF)');
+      ls.style.flexDirection = 'row'; ls.style.alignItems = 'center'; ls.style.gap = '8px';
+      r.append(ls);
       s.append(el('p', 'ayuda', 'Cambiar la marca afecta a ' + (usan === 1 ? 'este condominio' : 'los ' + usan + ' condominios que la usan') +
         '. Para usar tu propio logo o fondo, sube la imagen a la carpeta assets/img/ del repositorio y escribe aquí su ruta.'));
     }

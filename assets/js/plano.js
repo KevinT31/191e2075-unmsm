@@ -3,7 +3,7 @@
  * (index.html) y el editor (editor.html), así todos los planos comparten estilo.
  *
  * Tipos de forma que entiende:
- *   terreno  { puntos }                 contorno del terreno (se pinta como seto)
+ *   terreno  { puntos }                 contorno del terreno (verde sólido: los setos entre lotes)
  *   area     { puntos, nombre, color? } áreas comunes (club, parque…)
  *   via      { puntos, nombre, color? } calles, pasajes, carretera
  *   rotonda  { cx, cy, rx, ry }         fin de calle / rotonda con arbustos
@@ -23,7 +23,7 @@
     no_disponible: { nombre: 'No disponible', color: '#8e1618' }
   };
 
-  var COLORES = { via: '#e6d54c', area: 'url(#cesped)', terreno: 'url(#seto)', texto: '#2a2a1c' };
+  var COLORES = { via: '#e6d54c', area: 'url(#cesped)', terreno: '#3a6a22', texto: '#2a2a1c' };
 
   // 'arbustos' va debajo de las vías: así el camino tapa los arbustos donde entra a la rotonda
   var ORDEN_CAPAS = ['terreno', 'area', 'arbustos', 'via', 'rotonda', 'lote', 'texto'];
@@ -219,6 +219,48 @@
     return m;
   }
 
+  /*
+   * Sellos sobre el plano, como en los planos impresos: nombre del condominio
+   * con uvas (arriba a la izquierda) y logo de la marca (abajo a la derecha).
+   * cont debe ser un .plano-marco (posición relativa).
+   */
+  var UVAS = '<svg viewBox="0 0 64 72" aria-hidden="true">' +
+    '<path d="M33 12 C 33 7 36 3 41 1" stroke="#5a3b1e" stroke-width="3" fill="none" stroke-linecap="round"/>' +
+    '<path d="M34 13 C 42 2 58 3 62 12 C 52 17 42 17 34 13 Z" fill="#6f9e3a"/>' +
+    [[16, 18], [28, 18], [40, 18], [52, 18], [22, 29], [34, 29], [46, 29], [28, 40], [40, 40], [34, 51], [22, 40]]
+      .map(function (q) {
+        return '<circle cx="' + q[0] + '" cy="' + q[1] + '" r="6.6" fill="#6b2c5c"/>' +
+          '<circle cx="' + (q[0] - 2) + '" cy="' + (q[1] - 2) + '" r="1.8" fill="#fff" opacity=".35"/>';
+      }).join('') + '</svg>';
+
+  function sellos(cont, sitio, cond) {
+    cont.querySelectorAll('.sello').forEach(function (n) { n.remove(); });
+    if (!cond || cond.mostrarSellos === false) return;
+    var n = document.createElement('div');
+    n.className = 'sello sello-cond';
+    n.innerHTML = UVAS;
+    var t = document.createElement('div');
+    var b = document.createElement('b');
+    b.textContent = cond.nombre;
+    t.appendChild(b);
+    var lugar = String(cond.ubicacion || '').split(',')[0].trim();
+    if (lugar) {
+      var sm = document.createElement('small');
+      sm.textContent = lugar;
+      t.appendChild(sm);
+    }
+    n.appendChild(t);
+    cont.appendChild(n);
+    var m = marcaDe(sitio, cond);
+    if (m && m.logo) {
+      var img = document.createElement('img');
+      img.className = 'sello sello-marca';
+      img.src = m.logo;
+      img.alt = m.nombre || '';
+      cont.appendChild(img);
+    }
+  }
+
   function estadoDe(lote) { return ESTADOS[lote.estado] || ESTADOS.no_disponible; }
 
   function lineasLote(l, cond) {
@@ -246,10 +288,6 @@
 
   function defs(svg) {
     var d = crear('defs', null, svg);
-    var seto = crear('pattern', { id: 'seto', width: 9, height: 9, patternUnits: 'userSpaceOnUse' }, d);
-    crear('rect', { width: 9, height: 9, fill: '#3b6a23' }, seto);
-    crear('circle', { cx: 2.4, cy: 2.4, r: 2.3, fill: '#4f8631' }, seto);
-    crear('circle', { cx: 7, cy: 6.6, r: 2.1, fill: '#46792b' }, seto);
     var cesped = crear('pattern', { id: 'cesped', width: 12, height: 12, patternUnits: 'userSpaceOnUse', patternTransform: 'rotate(35)' }, d);
     crear('rect', { width: 12, height: 12, fill: '#6f9e4b' }, cesped);
     crear('rect', { width: 12, height: 5, fill: '#79a855' }, cesped);
@@ -446,6 +484,7 @@
     simular: simular,
     marcaDe: marcaDe,
     aplicarMarca: aplicarMarca,
+    sellos: sellos,
     aNumero: aNumero,
     estadoDe: estadoDe,
     dibujar: dibujar,

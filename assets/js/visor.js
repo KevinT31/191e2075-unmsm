@@ -111,13 +111,19 @@
     lotes(estado.cond).forEach(function (l) { usados[l.estado] = true; });
     var ley = $('leyenda');
     ley.replaceChildren();
+    // estados con el mismo color comparten una sola entrada ("Vendido / No disponible")
+    var porColor = {};
     Object.keys(Plano.ESTADOS).forEach(function (k) {
       if (!usados[k]) return;
+      var c = Plano.ESTADOS[k].color;
+      (porColor[c] = porColor[c] || []).push(Plano.ESTADOS[k].nombre);
+    });
+    Object.keys(porColor).forEach(function (c) {
       var s = texto('span');
       var m = texto('i', null, 'muestra');
-      m.style.background = Plano.ESTADOS[k].color;
+      m.style.background = c;
       s.appendChild(m);
-      s.appendChild(document.createTextNode(Plano.ESTADOS[k].nombre));
+      s.appendChild(document.createTextNode(porColor[c].join(' / ')));
       ley.appendChild(s);
     });
   }

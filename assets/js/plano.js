@@ -20,12 +20,13 @@
     separado:      { nombre: 'Separado',      color: '#ec8a16' },
     reservado:     { nombre: 'Reservado',     color: '#2f6fb0' },
     vendido:       { nombre: 'Vendido',       color: '#8e1618' },
-    no_disponible: { nombre: 'No disponible', color: '#b0291f' }
+    no_disponible: { nombre: 'No disponible', color: '#8e1618' }
   };
 
   var COLORES = { via: '#e6d54c', area: 'url(#cesped)', terreno: 'url(#seto)', texto: '#2a2a1c' };
 
-  var ORDEN_CAPAS = ['terreno', 'area', 'via', 'rotonda', 'lote', 'texto'];
+  // 'arbustos' va debajo de las vías: así el camino tapa los arbustos donde entra a la rotonda
+  var ORDEN_CAPAS = ['terreno', 'area', 'arbustos', 'via', 'rotonda', 'lote', 'texto'];
 
   function crear(tag, attrs, padre) {
     var n = document.createElementNS(NS, tag);
@@ -169,7 +170,7 @@
       if (!capa) return;
       var g = crear('g', { 'data-id': f.id, class: 'forma forma-' + f.tipo }, capa);
       if (f.tipo === 'lote') dibujarLote(g, f, cond, op);
-      else if (f.tipo === 'rotonda') dibujarRotonda(g, f);
+      else if (f.tipo === 'rotonda') dibujarRotonda(g, f, capas.arbustos);
       else if (f.tipo === 'texto') dibujarTexto(g, f);
       else dibujarPoligono(g, f);
       nodos.set(f.id, g);
@@ -205,13 +206,13 @@
     return lineas;
   }
 
-  function dibujarRotonda(g, f) {
-    crear('ellipse', { cx: f.cx, cy: f.cy, rx: f.rx, ry: f.ry, fill: f.color || COLORES.via }, g);
-    // arbustos alrededor
+  function dibujarRotonda(g, f, capaArbustos) {
+    // anillo de arbustos: medio arbusto queda fuera del óvalo, el resto lo tapa el relleno
     crear('ellipse', {
-      cx: f.cx, cy: f.cy, rx: f.rx + 1, ry: f.ry + 1, fill: 'none',
-      stroke: '#467a2b', 'stroke-width': 7, 'stroke-linecap': 'round', 'stroke-dasharray': '0 9.5'
-    }, g);
+      cx: f.cx, cy: f.cy, rx: f.rx + 2, ry: f.ry + 2, fill: 'none', 'pointer-events': 'none',
+      stroke: '#467a2b', 'stroke-width': 8, 'stroke-linecap': 'round', 'stroke-dasharray': '0 9.5'
+    }, capaArbustos);
+    crear('ellipse', { cx: f.cx, cy: f.cy, rx: f.rx, ry: f.ry, fill: f.color || COLORES.via }, g);
   }
 
   function dibujarTexto(g, f) {

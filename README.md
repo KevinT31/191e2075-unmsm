@@ -98,8 +98,8 @@ súbela a `assets/img/` y pon esa ruta en el campo `referencia` del condominio.
 | Disponible | verde |
 | Separado | naranja |
 | Reservado | azul |
-| Vendido | rojo oscuro |
-| No disponible | rojo |
+| Vendido | rojo |
+| No disponible | rojo (el mismo que vendido) |
 
 Los estados y colores están en `assets/js/plano.js` (`ESTADOS`). En el mapa, los
 lotes disponibles muestran número, área y perímetro (el precio solo aparece en la ficha

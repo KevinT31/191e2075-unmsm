@@ -99,6 +99,126 @@
     return String(v) + ' m²';
   }
 
+  /* Dinero con decimales fijos (cuotas): US$ 1,332.10 */
+  function formatoDinero(v, moneda, decimales) {
+    if (!isFinite(v)) return '';
+    var d = decimales == null ? 2 : decimales;
+    return (moneda ? moneda + ' ' : '') + Number(v).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+  }
+
+  /* ------------------------------------------------------------------
+   * Precios y crédito
+   * ------------------------------------------------------------------ */
+  var METODOS = {
+    frances: 'Cuota fija con interés (como los bancos, TEA)',
+    simple: 'Interés simple anual sobre el saldo',
+    sin: 'Sin intereses (solo cuotas)'
+  };
+  var BASES = {
+    contado: 'Precio al contado + intereses',
+    credito: 'Precio a crédito de lista'
+  };
+
+  function financiamientoPorDefecto() {
+    return {
+      base: 'contado',
+      metodo: 'frances',
+      tasaAnual: 10,
+      inicialSugerida: 8000,
+      inicialMinima: 5000,
+      plazos: [{ meses: 12 }, { meses: 18 }, { meses: 20 }, { meses: 24 }],
+      plazoMaximo: 36,
+      precioM2: '',
+      validezDias: 15,
+      mostrarTasa: true
+    };
+  }
+
+  /* Completa datos que falten y migra nombres antiguos (precio / precioBase). */
+  function normalizarCondominio(c) {
+    var def = financiamientoPorDefecto();
+    c.financiamiento = c.financiamiento || {};
+    for (var k in def) if (c.financiamiento[k] === undefined) c.financiamiento[k] = def[k];
+    if (!c.marca) c.marca = 'waka';
+    c.formas.forEach(function (f) {
+      if (f.tipo !== 'lote') return;
+      if (f.precioBase !== undefined && f.precioContado === undefined) { f.precioContado = f.precioBase; }
+      if (f.precio !== undefined && f.precioCredito === undefined) { f.precioCredito = f.precio; }
+      delete f.precioBase;
+      delete f.precio;
+    });
+    return c;
+  }
+
+  function precioContado(l) { var n = aNumero(l.precioContado); return isFinite(n) && n > 0 ? n : NaN; }
+  function precioCredito(l) { var n = aNumero(l.precioCredito); return isFinite(n) && n > 0 ? n : NaN; }
+
+  function tasaDePlazo(fin, meses) {
+    var p = (fin.plazos || []).find(function (x) { return +x.meses === +meses; });
+    var t = p && p.tasa !== '' && p.tasa != null && isFinite(+p.tasa) ? +p.tasa : +fin.tasaAnual;
+    return isFinite(t) ? t : 0;
+  }
+
+  /*
+   * simular(lote, cond, inicial, meses) → detalle del crédito
+   *   base 'contado': se financia (precio al contado − inicial) con intereses
+   *   base 'credito': se financia (precio a crédito de lista − inicial)
+   */
+  function simular(l, cond, inicial, meses) {
+    var fin = cond.financiamiento || financiamientoPorDefecto();
+    var precio = fin.base === 'credito' && isFinite(precioCredito(l)) ? precioCredito(l) : precioContado(l);
+    if (!isFinite(precio)) return null;
+    meses = Math.max(1, Math.round(+meses || 1));
+    inicial = Math.max(0, Math.min(+inicial || 0, precio));
+    var saldo = precio - inicial;
+    var tasa = fin.metodo === 'sin' ? 0 : tasaDePlazo(fin, meses);
+    var cuota, tem = 0;
+    if (fin.metodo === 'simple') {
+      cuota = saldo * (1 + (tasa / 100) * meses / 12) / meses;
+    } else if (fin.metodo === 'sin' || tasa === 0) {
+      cuota = saldo / meses;
+    } else {
+      tem = Math.pow(1 + tasa / 100, 1 / 12) - 1;
+      cuota = saldo * tem / (1 - Math.pow(1 + tem, -meses));
+    }
+    cuota = Math.round(cuota * 100) / 100;
+    var totalCuotas = cuota * meses;
+    return {
+      precioBase: precio,
+      inicial: inicial,
+      saldo: saldo,
+      meses: meses,
+      tasaAnual: tasa,
+      tasaMensual: tem * 100,
+      cuota: cuota,
+      intereses: Math.max(0, totalCuotas - saldo),
+      total: inicial + totalCuotas,
+      inicialMinima: +fin.inicialMinima || 0
+    };
+  }
+
+  function precioM2(l) {
+    var p = precioContado(l), a = aNumero(l.area);
+    return isFinite(p) && isFinite(a) && a > 0 ? p / a : NaN;
+  }
+
+  /* ------------------------------------------------------------------
+   * Marcas (WAKA, Ecoraiz…): color y paisaje de fondo del condominio
+   * ------------------------------------------------------------------ */
+  function marcaDe(sitio, cond) {
+    var marcas = (sitio && sitio.marcas) || {};
+    return marcas[cond && cond.marca] || marcas[Object.keys(marcas)[0]] || null;
+  }
+  function aplicarMarca(sitio, cond) {
+    var m = marcaDe(sitio, cond);
+    var raiz = document.documentElement.style;
+    raiz.setProperty('--marca', (m && m.color) || '#2e5a39');
+    // ruta absoluta: dentro de una variable CSS se resolvería desde la carpeta del CSS
+    var url = m && m.fondo ? new URL(m.fondo, document.baseURI).href : '';
+    raiz.setProperty('--fondo-img', url ? 'url("' + url.replace(/"/g, '%22') + '")' : 'none');
+    return m;
+  }
+
   function estadoDe(lote) { return ESTADOS[lote.estado] || ESTADOS.no_disponible; }
 
   function lineasLote(l, cond) {
@@ -314,6 +434,19 @@
     centroide: centroide,
     formatoPrecio: formatoPrecio,
     formatoArea: formatoArea,
+    formatoDinero: formatoDinero,
+    METODOS: METODOS,
+    BASES: BASES,
+    financiamientoPorDefecto: financiamientoPorDefecto,
+    normalizarCondominio: normalizarCondominio,
+    precioContado: precioContado,
+    precioCredito: precioCredito,
+    precioM2: precioM2,
+    tasaDePlazo: tasaDePlazo,
+    simular: simular,
+    marcaDe: marcaDe,
+    aplicarMarca: aplicarMarca,
+    aNumero: aNumero,
     estadoDe: estadoDe,
     dibujar: dibujar,
     Vista: Vista

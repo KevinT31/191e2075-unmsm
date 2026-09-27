@@ -24,8 +24,19 @@
     condominios: window.CONDOMINIOS || []
   };
 
-  let doc = cargarBorrador() || clonar(PUBLICADO);
-  if (!doc.sitio) doc.sitio = { nombre: 'Mapa de Lotes' };
+  const MARCAS_POR_DEFECTO = {
+    waka: { nombre: 'WAKA', lema: 'Eco-Condominio', color: '#8c1d1d', fondo: 'assets/img/fondo-waka.svg', logo: '' },
+    ecoraiz: { nombre: 'Ecoraiz', lema: 'Condominios ecológicos', color: '#7a4a26', fondo: 'assets/img/fondo-ecoraiz.svg', logo: '' }
+  };
+  function normalizar(d) {
+    if (!d.sitio) d.sitio = { nombre: 'Mapa de Lotes' };
+    if (!d.sitio.marcas || !Object.keys(d.sitio.marcas).length) d.sitio.marcas = clonar(MARCAS_POR_DEFECTO);
+    d.condominios.forEach(Plano.normalizarCondominio);
+    return d;
+  }
+  normalizar(PUBLICADO);
+
+  let doc = normalizar(cargarBorrador() || clonar(PUBLICADO));
   if (!doc.condominios.length) doc.condominios.push(condominioVacio('Nuevo condominio', 1600, 1000, 'US$'));
 
   let condId = doc.condominios.some((c) => c.id === location.hash.slice(1)) ? location.hash.slice(1) : doc.condominios[0].id;
@@ -222,10 +233,14 @@
     while (doc && doc.condominios.some((c) => c.id === id)) id = base + '-' + n++;
     return id;
   }
+  // condominio abierto, o null si aún no hay ninguno (al arrancar sin datos)
+  function actual() { try { return cond(); } catch (e) { return null; } }
   function condominioVacio(nombre, ancho, alto, moneda) {
     return {
       id: slug(nombre), nombre, ubicacion: '', descripcion: '',
       moneda: moneda || 'US$', whatsapp: '',
+      marca: (actual() && actual().marca) || 'waka',
+      financiamiento: clonar((actual() && actual().financiamiento) || Plano.financiamientoPorDefecto()),
       lienzo: { ancho, alto }, formas: []
     };
   }
@@ -363,6 +378,7 @@
 
   function render() {
     const c = cond();
+    Plano.aplicarMarca(doc.sitio, c);
     const r = ref(c.id);
     const src = r.local || c.referencia;
     const { capas, nodos } = Plano.dibujar(svg, c, {
@@ -833,15 +849,31 @@
         { opciones: Object.keys(Plano.ESTADOS).map((k) => [k, Plano.ESTADOS[k].nombre]) });
       campo(r, 'Área (m²)', 'area', f.area, (v) => { f.area = v.trim(); }, { placeholder: '900.00' });
       campo(r, 'Perímetro (ml)', 'perimetro', f.perimetro, (v) => { f.perimetro = v.trim(); });
-      campo(r, 'Precio de venta', 'precio', f.precio, (v) => { f.precio = numero(v); }, { tipo: 'number', min: 0, paso: 500, placeholder: '40000' });
-      campo(r, 'Precio base', 'precioBase', f.precioBase, (v) => { f.precioBase = numero(v); }, { tipo: 'number', min: 0, paso: 500 });
+      campo(r, 'Precio al contado', 'precioContado', f.precioContado, (v) => { f.precioContado = numero(v); resumenPrecio(); }, { tipo: 'number', min: 0, paso: 500, placeholder: '37000' });
+      campo(r, 'Precio a crédito de lista', 'precioCredito', f.precioCredito, (v) => { f.precioCredito = numero(v); resumenPrecio(); }, { tipo: 'number', min: 0, paso: 500, placeholder: '40000' });
       campo(r, 'Manzana', 'manzana', f.manzana, (v) => { f.manzana = texto(v.trim()); });
       campo(r, 'Responsable', 'responsable', f.responsable, (v) => { f.responsable = texto(v.trim()); });
       campo(r, 'Medidas de los lados', 'medidas', f.medidas, (v) => { f.medidas = texto(v); }, { ancho: true, placeholder: '48.26 · 22.90 · 48.66 · 22.66 ml' });
       campo(r, 'Nota (se ve en la web)', 'nota', f.nota, (v) => { f.nota = texto(v); }, { ancho: true, area: true });
       campo(r, 'Texto del lote', 'giro', f.giroEtiqueta || 0, (v) => { f.giroEtiqueta = +v || undefined; },
         { opciones: [['0', 'Horizontal'], ['-90', 'Vertical ↑'], ['90', 'Vertical ↓']] });
-      s.append(el('p', 'ayuda', 'En la web se muestra el precio de venta. El precio base y el responsable solo se ven aquí, en el editor (pero van dentro del archivo publicado).'));
+      const infoPrecio = el('p', 'ayuda');
+      s.append(infoPrecio);
+      function resumenPrecio() {
+        const c = cond(), fin = c.financiamiento;
+        const m2 = Plano.precioM2(f);
+        const plazos = fin.plazos.map((p) => +p.meses).filter((m) => m > 0).sort((a, b) => a - b);
+        const sim = plazos.length && Plano.simular(f, c, +fin.inicialSugerida || 0, plazos[plazos.length - 1]);
+        infoPrecio.textContent = [
+          isFinite(m2) ? Plano.formatoDinero(m2, c.moneda) + ' por m² al contado.' : '',
+          sim ? 'Con inicial de ' + Plano.formatoDinero(sim.inicial, c.moneda, 0) + ': ' + sim.meses + ' cuotas de ' + Plano.formatoDinero(sim.cuota, c.moneda) + ' (total ' + Plano.formatoDinero(sim.total, c.moneda) + ').' : '',
+          'La web muestra el precio al contado y el simulador de crédito. ' + (fin.base === 'credito'
+            ? 'El crédito se calcula sobre el precio a crédito de lista.'
+            : 'El precio a crédito de lista es solo una referencia interna: el crédito se calcula sobre el precio al contado.'),
+          'Ojo: el responsable y los precios van dentro del archivo publicado.'
+        ].filter(Boolean).join(' ');
+      }
+      resumenPrecio();
       if (f.etiqueta) s.append(boton('Centrar el texto del lote', () => { instantanea(); delete f.etiqueta; guardar(); render(); pintarProps(); }));
     } else if (f.tipo === 'rotonda') {
       campo(r, 'Centro X', 'cx', f.cx, (v) => { f.cx = numero(v) || 0; }, { tipo: 'number' });
@@ -878,6 +910,160 @@
     padre.append(envoltura);
   }
 
+  /* Aplica fn al cambiar el control, guardando antes una instantánea para deshacer. */
+  function conHistorial(inp, evento, fn) {
+    let pendiente = true;
+    inp.addEventListener('focus', () => { pendiente = true; });
+    inp.addEventListener(evento, () => {
+      if (pendiente) { instantanea(); pendiente = false; }
+      fn();
+      guardar();
+    });
+  }
+
+  function seccionMarca(c) {
+    const marcas = doc.sitio.marcas;
+    const s = seccion('Marca');
+    const r = el('div', 'rejilla');
+    s.append(r);
+    campo(r, 'Marca de este condominio', 'c-marca', c.marca, (v) => { c.marca = v; },
+      { ancho: true, refrescar: true, opciones: Object.keys(marcas).map((k) => [k, marcas[k].nombre || k]) });
+    const m = marcas[c.marca];
+    if (m) {
+      const usan = doc.condominios.filter((x) => x.marca === c.marca).length;
+      campo(r, 'Nombre de la marca', 'm-nombre', m.nombre, (v) => { m.nombre = v; });
+      campo(r, 'Lema', 'm-lema', m.lema, (v) => { m.lema = v; });
+      campo(r, 'Color', 'm-color', m.color, (v) => { m.color = v; }, { tipo: 'color' });
+      campo(r, 'Logo (opcional)', 'm-logo', m.logo, (v) => { m.logo = v.trim(); }, { placeholder: 'assets/img/logo.png' });
+      campo(r, 'Imagen de fondo', 'm-fondo', m.fondo, (v) => { m.fondo = v.trim(); }, { ancho: true, placeholder: 'assets/img/fondo-waka.svg' });
+      s.append(el('p', 'ayuda', 'Cambiar la marca afecta a ' + (usan === 1 ? 'este condominio' : 'los ' + usan + ' condominios que la usan') +
+        '. Para usar tu propio logo o fondo, sube la imagen a la carpeta assets/img/ del repositorio y escribe aquí su ruta.'));
+    }
+    s.append(boton('+ Nueva marca', () => {
+      modal((cuerpo, pie, cerrar) => {
+        cuerpo.append(el('h2', null, 'Nueva marca'));
+        const rr = el('div', 'rejilla');
+        const nombre = campoSimple(rr, 'Nombre', 'nueva-marca', 'text', '', true);
+        cuerpo.append(rr);
+        pie.append(boton('Cancelar', () => cerrar()), boton('Crear', () => {
+          const nom = nombre.value.trim();
+          if (!nom) { nombre.focus(); return; }
+          let clave = nom.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'marca';
+          while (marcas[clave]) clave += '-2';
+          instantanea();
+          marcas[clave] = { nombre: nom, lema: '', color: '#2e5a39', fondo: 'assets/img/fondo-waka.svg', logo: '' };
+          c.marca = clave;
+          guardar(); cerrar(); render(); pintarProps();
+        }, 'btn-primario'));
+        setTimeout(() => nombre.focus(), 30);
+      });
+    }));
+  }
+
+  function seccionPrecios(c) {
+    const fin = c.financiamiento;
+    const s = seccion('Precios y crédito');
+    const r = el('div', 'rejilla');
+    s.append(r);
+    const n0 = (v) => numero(v) ?? 0;
+    campo(r, 'Moneda', 'c-moneda', c.moneda, (v) => { c.moneda = v; ejemplo(); }, { placeholder: 'US$ o S/' });
+    campo(r, 'Tasa anual general (%)', 'f-tasa', fin.tasaAnual, (v) => { fin.tasaAnual = n0(v); ejemplo(); pintarPlazosPH(); }, { tipo: 'number', min: 0, paso: 0.5 });
+    campo(r, 'El crédito se calcula sobre', 'f-base', fin.base, (v) => { fin.base = v; ejemplo(); },
+      { ancho: true, opciones: Object.keys(Plano.BASES).map((k) => [k, Plano.BASES[k]]) });
+    campo(r, 'Tipo de interés', 'f-metodo', fin.metodo, (v) => { fin.metodo = v; ejemplo(); },
+      { ancho: true, opciones: Object.keys(Plano.METODOS).map((k) => [k, Plano.METODOS[k]]) });
+    campo(r, 'Inicial sugerida', 'f-inicial', fin.inicialSugerida, (v) => { fin.inicialSugerida = n0(v); ejemplo(); }, { tipo: 'number', min: 0, paso: 500 });
+    campo(r, 'Inicial mínima', 'f-inicialMin', fin.inicialMinima, (v) => { fin.inicialMinima = n0(v); }, { tipo: 'number', min: 0, paso: 500 });
+    campo(r, 'Plazo máximo (meses)', 'f-max', fin.plazoMaximo, (v) => { fin.plazoMaximo = Math.max(1, n0(v)); }, { tipo: 'number', min: 1 });
+    campo(r, 'Validez cotización (días)', 'f-validez', fin.validezDias, (v) => { fin.validezDias = Math.max(1, n0(v)); }, { tipo: 'number', min: 1 });
+    const lt = el('label', 'campo ancho');
+    const ct = el('input');
+    ct.type = 'checkbox'; ct.id = 'f-mostrarTasa'; ct.checked = !!fin.mostrarTasa; ct.style.width = 'auto';
+    conHistorial(ct, 'change', () => { fin.mostrarTasa = ct.checked; });
+    lt.append(ct, ' Mostrar la tasa de interés en la web y en las cotizaciones');
+    lt.style.flexDirection = 'row'; lt.style.alignItems = 'center'; lt.style.gap = '8px';
+    r.append(lt);
+
+    // Plazos
+    s.append(el('h3', null, 'Plazos que se ofrecen'));
+    const t = el('table', 'tabla-lotes');
+    const cab = el('tr');
+    ['Meses', 'Tasa propia (%)', ''].forEach((h) => cab.append(el('th', null, h)));
+    t.append(cab);
+    const tasasPH = [];
+    fin.plazos.forEach((p, i) => {
+      const tr = el('tr');
+      const im = el('input');
+      im.type = 'number'; im.min = '1'; im.value = p.meses; im.id = 'f-plazo-' + i; im.setAttribute('aria-label', 'Meses del plazo ' + (i + 1));
+      conHistorial(im, 'input', () => { p.meses = Math.max(1, n0(im.value)); ejemplo(); });
+      const it = el('input');
+      it.type = 'number'; it.min = '0'; it.step = '0.5'; it.value = p.tasa ?? ''; it.id = 'f-tasa-' + i;
+      it.setAttribute('aria-label', 'Tasa propia del plazo de ' + p.meses + ' meses');
+      tasasPH.push(it);
+      conHistorial(it, 'input', () => { if (it.value === '') delete p.tasa; else p.tasa = n0(it.value); ejemplo(); });
+      [im, it].forEach((x) => { x.style.width = '100%'; x.style.padding = '4px 6px'; x.style.border = '1px solid var(--linea)'; x.style.borderRadius = '6px'; x.style.background = 'var(--superficie)'; });
+      const quitar = el('button', null, '✕');
+      quitar.type = 'button';
+      quitar.title = 'Quitar este plazo';
+      quitar.addEventListener('click', () => { instantanea(); fin.plazos.splice(i, 1); guardar(); pintarProps(); });
+      const td = (x) => { const d = el('td'); d.append(x); return d; };
+      tr.append(td(im), td(it), td(quitar));
+      t.append(tr);
+    });
+    s.append(t);
+    function pintarPlazosPH() { tasasPH.forEach((x) => { x.placeholder = fin.tasaAnual + ' (general)'; }); }
+    pintarPlazosPH();
+    s.append(boton('+ Agregar plazo', () => {
+      instantanea();
+      const max = Math.max(0, ...fin.plazos.map((p) => +p.meses || 0));
+      fin.plazos.push({ meses: max + 6 });
+      guardar(); pintarProps();
+    }));
+    s.append(el('p', 'ayuda', 'Deja la tasa propia vacía para usar la tasa general. Con 0, ese plazo va sin intereses. En la web el cliente también puede escribir otro plazo hasta el máximo.'));
+
+    // Precio por m²
+    s.append(el('h3', null, 'Precio por m²'));
+    const rm = el('div', 'rejilla');
+    s.append(rm);
+    const im2 = campo(rm, 'Precio al contado por m²', 'f-m2', fin.precioM2, (v) => { fin.precioM2 = numero(v) ?? ''; }, { tipo: 'number', min: 0, paso: 0.5, placeholder: '40' });
+    const envolver = el('div', 'campo', '\u00a0');
+    envolver.append(boton('Aplicar a disponibles', async () => {
+      const pm2 = numero(im2.value);
+      if (!pm2) { avisar('Escribe primero el precio por m².'); im2.focus(); return; }
+      const ls = c.formas.filter((f) => f.tipo === 'lote' && f.estado === 'disponible' && isFinite(Plano.aNumero(f.area)));
+      if (!(await confirmar('Calcular precios por m²', 'Se reemplaza el precio al contado de ' + ls.length + ' lotes disponibles por área × ' +
+        Plano.formatoDinero(pm2, c.moneda) + ', redondeado a la centena.', 'Aplicar'))) return;
+      instantanea();
+      ls.forEach((f) => { f.precioContado = Math.round(Plano.aNumero(f.area) * pm2 / 100) * 100; });
+      guardar(); render(); pintarProps();
+      avisar('Precios actualizados');
+    }));
+    rm.append(envolver);
+
+    // Ejemplo en vivo
+    const ej = el('div', 'seccion');
+    s.append(ej);
+    function ejemplo() {
+      ej.replaceChildren();
+      const l = c.formas.find((f) => f.tipo === 'lote' && f.estado === 'disponible' && isFinite(Plano.precioContado(f)));
+      if (!l) return;
+      const ini = +fin.inicialSugerida || 0;
+      ej.append(el('h3', null, 'Ejemplo: Lote ' + l.numero + ', inicial ' + Plano.formatoDinero(ini, c.moneda, 0)));
+      const te = el('table', 'tabla-lotes');
+      const ce = el('tr');
+      ['Plazo', 'Cuota', 'Total'].forEach((h) => ce.append(el('th', null, h)));
+      te.append(ce);
+      fin.plazos.map((p) => +p.meses).filter((m) => m > 0).sort((a, b) => a - b).forEach((m) => {
+        const x = Plano.simular(l, c, ini, m);
+        const tr = el('tr');
+        [m + ' meses', Plano.formatoDinero(x.cuota, c.moneda), Plano.formatoDinero(x.total, c.moneda, 0)].forEach((v) => tr.append(el('td', null, v)));
+        te.append(tr);
+      });
+      ej.append(te);
+    }
+    ejemplo();
+  }
+
   function pintarPropsCondominio() {
     const c = cond();
     props.append(el('h2', null, c.nombre));
@@ -888,9 +1074,11 @@
     campo(r1, 'Nombre', 'c-nombre', c.nombre, (v) => { c.nombre = v; pintarPestanas(); }, { ancho: true });
     campo(r1, 'Ubicación', 'c-ubicacion', c.ubicacion, (v) => { c.ubicacion = v; }, { ancho: true });
     campo(r1, 'Descripción', 'c-descripcion', c.descripcion, (v) => { c.descripcion = v; }, { ancho: true, area: true });
-    campo(r1, 'Moneda', 'c-moneda', c.moneda, (v) => { c.moneda = v; }, { placeholder: 'US$ o S/' });
-    campo(r1, 'WhatsApp', 'c-whatsapp', c.whatsapp, (v) => { c.whatsapp = v.replace(/[^\d]/g, ''); }, { placeholder: '51987654321' });
+    campo(r1, 'WhatsApp', 'c-whatsapp', c.whatsapp, (v) => { c.whatsapp = v.replace(/[^\d]/g, ''); }, { ancho: true, placeholder: '51987654321' });
     s1.append(el('p', 'ayuda', 'WhatsApp con código de país y sin espacios. Si lo llenas, la ficha de cada lote disponible muestra el botón "Consultar por WhatsApp". Dirección de este plano en la web: index.html#' + c.id));
+
+    seccionMarca(c);
+    seccionPrecios(c);
 
     const sL = seccion('Lotes');
     const ls = c.formas.filter((f) => f.tipo === 'lote').sort((a, b) => String(a.numero).localeCompare(String(b.numero), 'es', { numeric: true }));
@@ -901,7 +1089,7 @@
       sL.append(el('p', 'ayuda', ls.length + ' lotes · ' + disp + ' disponibles. Cambia el estado aquí mismo o haz clic en el número para ver todos sus datos.'));
       const t = el('table', 'tabla-lotes');
       const cabT = el('tr');
-      ['Lote', 'Estado', 'Precio'].forEach((h) => cabT.append(el('th', null, h)));
+      ['Lote', 'Estado', 'Contado'].forEach((h) => cabT.append(el('th', null, h)));
       t.append(cabT);
       ls.forEach((l) => {
         const tr = el('tr');
@@ -920,7 +1108,7 @@
         sel.value = l.estado;
         sel.addEventListener('change', () => { instantanea(); l.estado = sel.value; m.style.background = Plano.estadoDe(l).color; guardar(); render(); });
         td2.append(sel);
-        tr.append(td1, td2, el('td', null, Plano.formatoPrecio(l.precio, c.moneda)));
+        tr.append(td1, td2, el('td', null, Plano.formatoPrecio(l.precioContado, c.moneda)));
         t.append(tr);
       });
       sL.append(t);

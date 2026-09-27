@@ -12,7 +12,11 @@
 </head>
 <body>
 <header class="barra">
-  <div class="marca"><span class="marca-nombre" id="sitioNombre">Mapa de Lotes</span></div>
+  <div class="marca">
+    <img class="marca-logo" id="marcaLogo" alt="" hidden>
+    <span class="marca-nombre" id="sitioNombre">Mapa de Lotes</span>
+    <span class="marca-sub" id="marcaLema"></span>
+  </div>
   <nav class="pestanas" id="pestanas" role="tablist" aria-label="Condominios"></nav>
 </header>
 
@@ -39,6 +43,7 @@
         <button type="button" class="btn btn-icono" id="zoomMenos" aria-label="Alejar">−</button>
         <button type="button" class="btn btn-icono" id="zoomMas" aria-label="Acercar">+</button>
         <button type="button" class="btn" id="zoomReset">Encuadrar</button>
+        <button type="button" class="btn" id="btnPlanoPdf">Descargar plano (PDF)</button>
       </div>
     </div>
 
@@ -54,6 +59,9 @@
 </main>
 
 <footer class="pie" id="pie"></footer>
+
+<!-- Se llena al exportar a PDF (plano o cotización) -->
+<div id="impresion"></div>
 
 <script src="data/condominios.js"></script>
 <script src="assets/js/plano.js"></script>

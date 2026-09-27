@@ -1,8 +1,11 @@
 # Mapa de Lotes
 
 Plataforma web para mostrar planos de condominios con sus lotes. Al tocar un lote
-se ve su ficha: estado, área, perímetro, medidas y precio. Todos los condominios
-comparten el mismo estilo y cada uno tiene su propia pestaña.
+se ve su ficha: estado, área, perímetro, medidas, precio al contado y un
+**simulador de crédito** (inicial, plazo, cuota, intereses). La ficha se descarga
+como **cotización en PDF** y el plano completo también. Todos los condominios
+comparten el mismo estilo, cada uno tiene su propia pestaña y usa una **marca**
+(WAKA, Ecoraiz…) con su color y su fondo.
 
 Hay dos páginas:
 
@@ -24,7 +27,7 @@ assets/js/plano.js      dibujo del plano (compartido: mismo estilo en todo)
 assets/js/visor.js      lógica del visor
 assets/js/editor.js     lógica del editor
 assets/css/estilo.css   estilos
-assets/img/             imágenes para calcar (solo las usa el editor)
+assets/img/             fondos de las marcas e imágenes para calcar
 ```
 
 ## Publicar la web con GitHub Pages
@@ -91,6 +94,55 @@ punto; doble clic en un punto lo borra. El cuadrito azul de un lote mueve su tex
 Si quieres que la foto de referencia quede disponible en cualquier computadora,
 súbela a `assets/img/` y pon esa ruta en el campo `referencia` del condominio.
 
+## Precios y crédito
+
+Cada lote tiene dos precios (se editan en su ficha del editor):
+
+- **Precio al contado**: el que se muestra en la web.
+- **Precio a crédito de lista**: referencia interna. Solo se usa para calcular
+  si eliges esa base en la configuración del crédito.
+
+La configuración del crédito es por condominio (editor → sin nada seleccionado →
+**Precios y crédito**):
+
+| Opción | Qué hace |
+| --- | --- |
+| El crédito se calcula sobre | *Precio al contado + intereses* (por defecto) o *Precio a crédito de lista*. |
+| Tipo de interés | *Cuota fija con TEA* (sistema francés, como los bancos), *Interés simple anual* o *Sin intereses*. |
+| Tasa anual general | TEA en %. Por defecto 10%. |
+| Plazos | Los plazos que se ofrecen (12, 18, 20, 24…). Cada uno puede tener su propia tasa; vacía = la general, 0 = sin intereses. |
+| Inicial sugerida / mínima | La sugerida aparece al abrir el simulador; si el cliente pone menos que la mínima, se le avisa. |
+| Plazo máximo | Tope para el campo "Otro" plazo del simulador. |
+| Precio por m² | Con "Aplicar a disponibles" calcula el precio al contado de cada lote disponible como área × precio por m², redondeado a la centena. |
+| Validez de la cotización | Días que figura como válida la cotización en PDF. |
+
+Fórmula con cuota fija: tasa mensual = (1 + TEA)^(1/12) − 1 y
+cuota = saldo × i / (1 − (1 + i)^−n), donde saldo = precio − inicial.
+Ejemplo: 37,000 al contado con 8,000 de inicial y TEA 10% da 24 cuotas de
+US$ 1,332.44 (total US$ 39,978.56).
+
+## PDF
+
+- **Descargar plano (PDF)**, encima del plano: plano horizontal y tabla de lotes
+  disponibles con su precio y su cuota de referencia.
+- **Descargar cotización (PDF)**, en la ficha de un lote: datos del lote, su
+  ubicación marcada en el plano, el plan de pago que se simuló y las demás opciones
+  de plazo con la misma inicial.
+
+Los dos abren la ventana de impresión del navegador: elige **Guardar como PDF**.
+En el celular funciona igual (Compartir → Imprimir → Guardar PDF).
+
+## Marcas (WAKA, Ecoraiz)
+
+Las marcas están en `data/condominios.js` (`SITIO.marcas`) y cada condominio dice
+cuál usa (`"marca": "waka"`). Cada marca tiene nombre, lema, color, logo opcional y
+una imagen de fondo (el paisaje detrás del plano y de la página). Todo se cambia en
+el editor → **Marca**, y ahí mismo se crean marcas nuevas.
+
+Los fondos incluidos son `assets/img/fondo-waka.svg` (viñedo verde) y
+`assets/img/fondo-ecoraiz.svg` (tonos tierra). Para usar una foto o el logo real,
+súbelos a `assets/img/` y escribe la ruta en la marca.
+
 ## Estados de los lotes
 
 | Estado | Color |
@@ -111,7 +163,7 @@ El plano se digitalizó desde la foto original (`assets/img/la-finca-referencia.
 detectando cada lote por su color, así que las formas calzan con la foto.
 
 - Verdes (disponibles) con precio: lotes 03, 11, 12, 16, 17, 18, 27, 28, 30 y 34.
-  `precio` es el valor en verde de la lista y `precioBase` el valor en azul.
+  `precioContado` es el valor en azul de la lista y `precioCredito` el valor en verde.
 - 16, 17 y 18 tienen 1000 m² y 150 ml.
 - Los demás están en rojo: *Vendido* si así figuraba en la foto, y
   *No disponible* para 01, 07, 09, 10, 22 (antes separado), 25 y 26.
@@ -123,5 +175,5 @@ detectando cada lote por su color, así que las formas calzan con la foto.
 - Moneda: `US$`. Se cambia en el editor (campo *Moneda*).
 
 **Importante:** todo lo que está en `data/condominios.js` es público cuando la web
-está publicada, aunque el visor no lo muestre. Eso incluye `precioBase` y
+está publicada, aunque el visor no lo muestre. Eso incluye `precioCredito` y
 `responsable`. Si esos datos son privados, bórralos antes de publicar.

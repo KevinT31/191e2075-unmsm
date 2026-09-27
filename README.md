@@ -173,8 +173,7 @@ detectando cada lote por su color, así que las formas calzan con la foto.
 - Verdes (disponibles) con precio: lotes 03, 11, 12, 16, 17, 18, 27, 28, 30 y 34.
   `precioContado` es el valor en azul de la lista y `precioCredito` el valor en verde.
 - 16, 17 y 18 tienen 1000 m² y 150 ml.
-- Los demás están en rojo: *Vendido* si así figuraba en la foto, y
-  *No disponible* para 01, 07, 09, 10, 22 (antes separado), 25 y 26.
+- Los demás (26 lotes) están en rojo como *Vendido*.
 - La foto tapa con "VENDIDO" el número de varios lotes; se numeraron siguiendo
   el orden del plano (01–11 a la izquierda de abajo hacia arriba, 12, 13–18 bajando,
   19–24 subiendo, 25, 26–35 a la derecha bajando). El lote junto al ingreso no

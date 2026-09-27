@@ -402,7 +402,7 @@
     var alto = tams.reduce(function (a, b) { return a + b * 1.2; }, 0);
     var t = crear('text', {
       x: c[0], y: c[1] - alto / 2, class: 'etiqueta-lote', 'text-anchor': 'middle',
-      'stroke-width': (s / 5.5).toFixed(2),
+      'stroke-width': (s / 8).toFixed(2),
       transform: giro ? 'rotate(' + giro + ' ' + c[0] + ' ' + c[1] + ')' : null
     }, g);
     var acumulado = 0;

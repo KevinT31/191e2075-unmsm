@@ -115,9 +115,10 @@
     pintarPanel();
   }
 
+  /* Encuadre ajustado al dibujo: sin bordes a los lados ni abajo, un respiro arriba. */
   function encuadre(c) {
-    var b = Plano.cajaFormas(c), m = 10;
-    return { x: b.x - m, y: b.y - m, w: b.w + 2 * m, h: b.h + 2 * m };
+    var b = Plano.cajaFormas(c), arriba = 8;
+    return { x: b.x, y: b.y - arriba, w: b.w, h: b.h + arriba };
   }
 
   function redibujar() {
@@ -537,7 +538,16 @@
 
   /* Solo la imagen: plano, fondo y logo a toda la hoja, sin tablas. Para imprimir. */
   function imprimirImagen() {
+    // La hoja toma la proporción exacta del plano (ancho A4 horizontal), así
+    // el PDF queda recortado al dibujo, sin franjas de fondo sobrantes.
+    var b = encuadre(estado.cond);
+    var ancho = 297, alto = +(297 * b.h / b.w).toFixed(1);
+    if (alto > 210) { alto = 210; ancho = +(210 * b.w / b.h).toFixed(1); }
+    var estilo = $('estiloPoster') || document.head.appendChild(Object.assign(document.createElement('style'), { id: 'estiloPoster' }));
+    estilo.textContent = '@page poster { size: ' + ancho + 'mm ' + alto + 'mm; margin: 0; }';
     var h = texto('div', null, 'hoja-poster');
+    h.style.width = ancho + 'mm';
+    h.style.height = (alto - 0.3) + 'mm';
     h.appendChild(planoImpreso(null, true));
     imprimir(h, estado.cond.nombre + ' - plano para imprimir');
   }

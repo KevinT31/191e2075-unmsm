@@ -104,22 +104,22 @@
     var titulo = 'LOTE ' + (l.numero || '—');
     if (l.estado === 'disponible') {
       var out = [{ t: titulo, c: 'l-n' }];
-      if (l.area) out.push({ t: formatoArea(l.area), c: 'l-d' });
-      var pr = formatoPrecio(l.precio, cond.moneda);
-      if (pr) out.push({ t: pr, c: 'l-p' });
+      // como en el plano original: área y perímetro (el precio solo va en la ficha)
+      if (l.area) out.push({ t: 'Área: ' + formatoArea(l.area), c: 'l-d' });
+      if (l.perimetro) out.push({ t: 'Perímetro: ' + l.perimetro + ' ml', c: 'l-d' });
       return out;
     }
     return [{ t: titulo, c: 'l-n' }, { t: estadoDe(l).nombre.toUpperCase(), c: 'l-e' }];
   }
 
   /* Tamaño de letra según el espacio que tiene el lote. */
-  function medidasEtiqueta(p, giro, nLineas) {
+  function medidasEtiqueta(p, giro, nLineas, maxCar) {
     var b = caja(p);
     var A = Math.abs(areaPoligono(p));
     var vertical = Math.abs(giro || 0) % 180 === 90;
     var largo = vertical ? b.h : A / Math.max(b.h, 1);
     var grosor = vertical ? A / Math.max(b.h, 1) : b.h;
-    var s = Math.min(grosor / (nLineas * 1.45), largo / 7.2);
+    var s = Math.min(grosor / (nLineas * 1.45), largo / 7.2, largo / (0.62 * (maxCar || 8) + 1));
     return Math.max(7, Math.min(19, s));
   }
 
@@ -237,7 +237,8 @@
     var giro = l.giroEtiqueta || 0;
     var c = centroide(l.puntos);
     if (l.etiqueta) { c = [c[0] + (l.etiqueta.dx || 0), c[1] + (l.etiqueta.dy || 0)]; }
-    var s = medidasEtiqueta(l.puntos, giro, lineas.length);
+    var maxCar = Math.max.apply(null, lineas.map(function (ln) { return ln.t.length * (ln.c === 'l-d' ? 0.86 : 1); }));
+    var s = medidasEtiqueta(l.puntos, giro, lineas.length, maxCar);
     var tams = lineas.map(function (ln) { return ln.c === 'l-n' ? s * 1.08 : ln.c === 'l-p' ? s * 1.02 : s * 0.86; });
     var alto = tams.reduce(function (a, b) { return a + b * 1.2; }, 0);
     var t = crear('text', {

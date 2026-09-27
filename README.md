@@ -102,7 +102,8 @@ súbela a `assets/img/` y pon esa ruta en el campo `referencia` del condominio.
 | No disponible | rojo |
 
 Los estados y colores están en `assets/js/plano.js` (`ESTADOS`). En el mapa, los
-lotes disponibles muestran número, área y precio; los demás, número y estado.
+lotes disponibles muestran número, área y perímetro (el precio solo aparece en la ficha
+al tocar el lote); los demás, número y estado.
 
 ## Datos de La Finca
 

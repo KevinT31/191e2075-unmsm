@@ -1,5 +1,7 @@
 # Mapa de Lotes
 
+> **Legacy repository name:** `191e2075-unmsm` is an older repository name. The current project in this repository is the interactive lot-map platform documented below.
+
 Plataforma web para mostrar planos de condominios con sus lotes. Al tocar un lote
 se ve su ficha: estado, área, perímetro, medidas, precio al contado y un
 **simulador de crédito** (inicial, plazo, cuota, intereses). La ficha se descarga
@@ -182,5 +184,4 @@ detectando cada lote por su color, así que las formas calzan con la foto.
 - Moneda: `US$`. Se cambia en el editor (campo *Moneda*).
 
 **Importante:** todo lo que está en `data/condominios.js` es público cuando la web
-está publicada, aunque el visor no lo muestre. Eso incluye `precioCredito` y
-`responsable`. Si esos datos son privados, bórralos antes de publicar.
+está publicada, aunque el visor no lo muestre. Eso incluye `precioCredito`, porque el simulador funciona completamente en el navegador. No guardes nombres de responsables, contactos internos, márgenes u otros datos privados en este archivo.

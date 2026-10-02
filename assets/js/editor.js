@@ -852,7 +852,6 @@
       campo(r, 'Precio al contado', 'precioContado', f.precioContado, (v) => { f.precioContado = numero(v); resumenPrecio(); }, { tipo: 'number', min: 0, paso: 500, placeholder: '37000' });
       campo(r, 'Precio a crédito de lista', 'precioCredito', f.precioCredito, (v) => { f.precioCredito = numero(v); resumenPrecio(); }, { tipo: 'number', min: 0, paso: 500, placeholder: '40000' });
       campo(r, 'Manzana', 'manzana', f.manzana, (v) => { f.manzana = texto(v.trim()); });
-      campo(r, 'Responsable', 'responsable', f.responsable, (v) => { f.responsable = texto(v.trim()); });
       campo(r, 'Medidas de los lados', 'medidas', f.medidas, (v) => { f.medidas = texto(v); }, { ancho: true, placeholder: '48.26 · 22.90 · 48.66 · 22.66 ml' });
       campo(r, 'Nota (se ve en la web)', 'nota', f.nota, (v) => { f.nota = texto(v); }, { ancho: true, area: true });
       campo(r, 'Texto del lote', 'giro', f.giroEtiqueta || 0, (v) => { f.giroEtiqueta = +v || undefined; },
@@ -870,7 +869,7 @@
           'La web muestra el precio al contado y el simulador de crédito. ' + (fin.base === 'credito'
             ? 'El crédito se calcula sobre el precio a crédito de lista.'
             : 'El precio a crédito de lista es solo una referencia interna: el crédito se calcula sobre el precio al contado.'),
-          'Ojo: el responsable y los precios van dentro del archivo publicado.'
+          'Ojo: los precios configurados van dentro del archivo publicado.'
         ].filter(Boolean).join(' ');
       }
       resumenPrecio();

@@ -1,187 +1,137 @@
-# Mapa de Lotes
+<div align="center">
 
-> **Legacy repository name:** `191e2075-unmsm` is an older repository name. The current project in this repository is the interactive lot-map platform documented below.
+# Interactive Lot Map
 
-Plataforma web para mostrar planos de condominios con sus lotes. Al tocar un lote
-se ve su ficha: estado, área, perímetro, medidas, precio al contado y un
-**simulador de crédito** (inicial, plazo, cuota, intereses). La ficha se descarga
-como **cotización en PDF** y el plano completo también. Todos los condominios
-comparten el mismo estilo, cada uno tiene su propia pestaña y usa una **marca**
-(WAKA, Ecoraiz…) con su color y su fondo.
+### Real-Estate Lot Visualization · Credit Simulation · PDF Quotations
 
-Hay dos páginas:
+</div>
 
-| Página | Para quién | Qué hace |
-| --- | --- | --- |
-| `index.html` | Visitantes de la web | Plano interactivo, lista de lotes disponibles y ficha de cada lote. |
-| `editor.html` | Tú | Dibujar y editar planos, cambiar estados y precios, crear condominios nuevos. |
+---
 
-No necesita servidor ni base de datos: son archivos estáticos. Funciona abriendo
-`index.html` con doble clic o publicándolo en GitHub Pages.
+## Overview
 
-## Estructura
+**Interactive Lot Map** is a static web application for visualizing condominium/land-development plans and interacting with individual lots.
 
-```
-index.html              visor público
-editor.html             editor de planos
-data/condominios.js     TODOS los datos (condominios, lotes, vías, precios…)
-assets/js/plano.js      dibujo del plano (compartido: mismo estilo en todo)
-assets/js/visor.js      lógica del visor
-assets/js/editor.js     lógica del editor
-assets/css/estilo.css   estilos
-assets/img/             fondos de las marcas e imágenes para calcar
-```
+Visitors can inspect availability and lot details, while a separate browser-based editor supports plan creation, geometry editing, pricing and condominium configuration.
 
-## Publicar la web con GitHub Pages
+The project runs without a backend or database: published state is stored in versioned JavaScript data and rendered entirely in the browser.
 
-1. Une esta rama con `main` (o la rama que quieras publicar).
-2. En GitHub: **Settings → Pages → Build and deployment → Deploy from a branch**,
-   elige `main` y la carpeta `/ (root)`.
-3. En uno o dos minutos la web queda en `https://<tu-usuario>.github.io/<repositorio>/`.
+## Main Capabilities
 
-### Ponerlo dentro de otra página web
+### Public Viewer
 
-Con un enlace directo a un condominio:
+- interactive condominium plans
+- lot status visualization
+- lot area, perimeter and dimensions
+- cash-price display
+- credit simulation
+- downloadable/printable PDF quotation flows
+- direct links to individual condominiums
+- embeddable viewer mode
 
-```
-https://<tu-usuario>.github.io/<repositorio>/#la-finca
-```
+### Plan Editor
 
-O incrustado (sin cabecera ni pie) con un `iframe`:
+- draw/edit lots, roads, common areas and terrain boundaries
+- move and edit polygon points
+- snapping behavior
+- undo/redo
+- brand configuration
+- lot status and price editing
+- credit configuration per condominium
+- browser-local draft persistence
+- export of the public data file
 
-```html
-<iframe src="https://<tu-usuario>.github.io/<repositorio>/?embed#la-finca"
-        style="width:100%;height:900px;border:0" loading="lazy"></iframe>
-```
+## Architecture
 
-## Cómo editar
+~~~mermaid
+flowchart LR
+    Data[data/condominios.js] --> Core[Shared Plan Engine]
+    Core --> Viewer[index.html]
+    Core --> Editor[editor.html]
 
-1. Abre `editor.html`.
-2. Haz los cambios. Se guardan solos en tu navegador (borrador).
-3. **Vista previa** abre la web con tu borrador para revisarla.
-4. **Publicar cambios** descarga `condominios.js`. Súbelo a la carpeta `data/`
-   del repositorio reemplazando el anterior (en GitHub: *Add file → Upload files*).
+    Viewer --> Quote[Credit Simulator / PDF]
+    Editor --> Draft[Browser Draft]
+    Draft --> Export[Export Updated Data File]
+~~~
 
-> El borrador vive solo en el navegador donde editas. Si cambias de computadora,
-> publica primero o usa **Importar** con el archivo `condominios.js`.
+## Repository Structure
 
-### Herramientas y atajos
+~~~text
+index.html              public viewer
+editor.html             visual editor
+data/condominios.js     published condominium/lot data
+assets/js/plano.js      shared plan renderer
+assets/js/visor.js      viewer behavior
+assets/js/editor.js     editor behavior
+assets/css/estilo.css   styling
+assets/img/             brand/reference assets
+docs/USER_GUIDE.md      detailed editing/publishing guide
+~~~
 
-| Herramienta | Tecla | Uso |
-| --- | --- | --- |
-| Mover | `V` | Clic para seleccionar; arrastra la forma o sus puntos azules. |
-| Vista | `H` o mantener `Espacio` | Arrastra para desplazarte. La rueda del ratón acerca y aleja. |
-| Lote | `L` | Clic en cada esquina; termina con `Enter`, doble clic o clic en el primer punto. |
-| Vía | `R` | Igual que lote. Para calles, pasajes o carretera (color editable). |
-| Área | `A` | Áreas comunes (club, parque…). Su nombre se escribe dentro. |
-| Terreno | `T` | Contorno del terreno; se pinta como seto verde. |
-| Rotonda | `O` | Arrastra para dibujarla. |
-| Texto | `X` | Clic donde va el texto. |
+## Run Locally
 
-Más atajos: `Ctrl+Z` deshacer, `Ctrl+Y` rehacer, `Ctrl+D` duplicar,
-`Supr` eliminar, flechas para mover fino (`Shift` = 10 unidades), `Esc` cancelar.
-Las esquinas se pegan a esquinas y bordes cercanos para que los lotes vecinos
-compartan borde; mantén `Alt` para evitarlo. Doble clic en un borde agrega un
-punto; doble clic en un punto lo borra. El cuadrito azul de un lote mueve su texto.
+No build step is required.
 
-### Crear otro condominio
+Open **index.html** directly in a browser, or serve the repository as static files.
 
-1. En el editor: **+ Nuevo condominio**.
-2. En el panel derecho, **Imagen para calcar → Cargar imagen…** con la foto del
-   plano. Si el lienzo está vacío, se ajusta al tamaño de la imagen.
-3. Dibuja el terreno (`T`), las vías (`R`), las áreas (`A`) y los lotes (`L`)
-   encima de la foto. Luego oculta la foto y completa los datos de cada lote.
-4. **Publicar cambios**.
+For the editor, open **editor.html**.
 
-Si quieres que la foto de referencia quede disponible en cualquier computadora,
-súbela a `assets/img/` y pon esa ruta en el campo `referencia` del condominio.
+## Publish with GitHub Pages
 
-## Precios y crédito
+The project is compatible with static hosting such as GitHub Pages because it does not require a server runtime.
 
-Cada lote tiene dos precios (se editan en su ficha del editor):
+Typical publishing flow:
 
-- **Precio al contado**: el que se muestra en la web.
-- **Precio a crédito de lista**: referencia interna. Solo se usa para calcular
-  si eliges esa base en la configuración del crédito.
+1. publish the repository from the main branch
+2. select the repository root as the Pages source
+3. access the viewer through the generated GitHub Pages URL
 
-La configuración del crédito es por condominio (editor → sin nada seleccionado →
-**Precios y crédito**):
+See the [detailed user/editor guide](./docs/USER_GUIDE.md) for embedding, editing and publishing instructions.
 
-| Opción | Qué hace |
-| --- | --- |
-| El crédito se calcula sobre | *Precio al contado + intereses* (por defecto) o *Precio a crédito de lista*. |
-| Tipo de interés | *Cuota fija con TEA* (sistema francés, como los bancos), *Interés simple anual* o *Sin intereses*. |
-| Tasa anual general | TEA en %. Por defecto 10%. |
-| Plazos | Los plazos que se ofrecen (12, 18, 20, 24…). Cada uno puede tener su propia tasa; vacía = la general, 0 = sin intereses. |
-| Inicial sugerida / mínima | La sugerida aparece al abrir el simulador; si el cliente pone menos que la mínima, se le avisa. |
-| Plazo máximo | Tope para el campo "Otro" plazo del simulador. |
-| Precio por m² | Con "Aplicar a disponibles" calcula el precio al contado de cada lote disponible como área × precio por m², redondeado a la centena. |
-| Validez de la cotización | Días que figura como válida la cotización en PDF. |
+## Credit Simulation
 
-Fórmula con cuota fija: tasa mensual = (1 + TEA)^(1/12) − 1 y
-cuota = saldo × i / (1 − (1 + i)^−n), donde saldo = precio − inicial.
-Ejemplo: 37,000 al contado con 8,000 de inicial y TEA 10% da 24 cuotas de
-US$ 1,332.44 (total US$ 39,978.56).
+The browser-side simulator supports configurable:
 
-## PDF
+- cash vs credit-list base price
+- fixed-payment TEA flow
+- simple annual interest
+- no-interest plans
+- down payment
+- term options
+- per-term rates
+- quotation validity
 
-- **Imagen para imprimir (PDF)**, encima del plano: solo el plano con el fondo,
-  el nombre del condominio y el logo, a toda la hoja (A4 horizontal, sin márgenes
-  ni tablas). Es el que se imprime o se manda como imagen.
-- **Plano con precios (PDF)**: plano horizontal y tabla de lotes disponibles con
-  su precio y su cuota de referencia.
-- **Descargar cotización (PDF)**, en la ficha de un lote: datos del lote, su
-  ubicación marcada en el plano, el plan de pago que se simuló y las demás opciones
-  de plazo con la misma inicial.
+Because the simulator is entirely client-side, every value required by it is publicly downloadable with the static site.
 
-Los dos abren la ventana de impresión del navegador: elige **Guardar como PDF**.
-En el celular funciona igual (Compartir → Imprimir → Guardar PDF).
+## Public Data Boundary
 
-## Marcas (WAKA, Ecoraiz)
+**Anything stored in data/condominios.js is public when the site is published.**
 
-Las marcas están en `data/condominios.js` (`SITIO.marcas`) y cada condominio dice
-cuál usa (`"marca": "waka"`). Cada marca tiene nombre, lema, color, logo opcional y
-una imagen de fondo (el paisaje detrás del plano y de la página). Todo se cambia en
-el editor → **Marca**, y ahí mismo se crean marcas nuevas.
+Do not place in that file:
 
-Los fondos incluidos son `assets/img/fondo-waka.svg` (viñedo verde) y
-`assets/img/fondo-ecoraiz.svg` (tonos tierra), y los logos `assets/img/logo-waka.svg`
-y `assets/img/logo-ecoraiz.svg`. Esos logos son una versión dibujada para el sitio:
-para usar el archivo oficial, súbelo a `assets/img/` y escribe su ruta en la marca.
+- internal contacts
+- responsible-person names
+- private margins
+- confidential commercial notes
+- credentials
+- any data that should not be downloadable by a visitor
 
-Sobre el plano aparecen, como en los planos impresos, el nombre del condominio con
-uvas (arriba a la izquierda) y el logo de la marca (abajo a la derecha). Se apagan
-por condominio en el editor → Marca.
+The project intentionally keeps the published dataset separate from private operational systems.
 
-## Estados de los lotes
+## Current Scope
 
-| Estado | Color |
-| --- | --- |
-| Disponible | verde |
-| Separado | naranja |
-| Reservado | azul |
-| Vendido | rojo |
-| No disponible | rojo (el mismo que vendido) |
+This repository is a static visualization/editor tool. It does not implement:
 
-Los estados y colores están en `assets/js/plano.js` (`ESTADOS`). En el mapa, los
-lotes disponibles muestran número, área y perímetro (el precio solo aparece en la ficha
-al tocar el lote); los demás, número y estado.
+- authenticated CRM workflows
+- server-side inventory locking
+- transactional sales operations
+- private pricing storage
+- multi-user concurrency
 
-## Datos de La Finca
+Those concerns belong in a backend/operational platform rather than a public static viewer.
 
-El plano se digitalizó desde la foto original (`assets/img/la-finca-referencia.webp`)
-detectando cada lote por su color, así que las formas calzan con la foto.
+---
 
-- Verdes (disponibles) con precio: lotes 03, 11, 12, 16, 17, 18, 27, 28, 30 y 34.
-  `precioContado` es el valor en azul de la lista y `precioCredito` el valor en verde.
-- 16, 17 y 18 tienen 1000 m² y 150 ml.
-- Los demás (26 lotes) están en rojo como *Vendido*.
-- La foto tapa con "VENDIDO" el número de varios lotes; se numeraron siguiendo
-  el orden del plano (01–11 a la izquierda de abajo hacia arriba, 12, 13–18 bajando,
-  19–24 subiendo, 25, 26–35 a la derecha bajando). El lote junto al ingreso no
-  tiene número en la foto: quedó como 36. Todo se corrige desde el editor.
-- Las medidas de los lados se leyeron de los números pequeños de la foto. Verifícalas.
-- Moneda: `US$`. Se cambia en el editor (campo *Moneda*).
+### What this project demonstrates
 
-**Importante:** todo lo que está en `data/condominios.js` es público cuando la web
-está publicada, aunque el visor no lo muestre. Eso incluye `precioCredito`, porque el simulador funciona completamente en el navegador. No guardes nombres de responsables, contactos internos, márgenes u otros datos privados en este archivo.
+**Vanilla JavaScript · browser geometry/editor tooling · static architecture · financial simulation · PDF-oriented UX · real-estate product tooling**
